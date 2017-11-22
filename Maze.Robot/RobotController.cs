@@ -1,4 +1,6 @@
 ﻿using Maze.Library;
+using System.Collections.Generic;
+using System.Drawing;
 
 namespace Maze.Solver
 {
@@ -8,6 +10,8 @@ namespace Maze.Solver
     public class RobotController
     {
         private IRobot robot;
+        private bool end;
+        private HashSet<Point> points;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="RobotController"/> class
@@ -17,6 +21,8 @@ namespace Maze.Solver
         {
             // Store robot for later use
             this.robot = robot;
+            this.end = false;
+            this.points = new HashSet<Point>();
         }
 
         /// <summary>
@@ -31,15 +37,67 @@ namespace Maze.Solver
         /// </remarks>
         public void MoveRobotToExit()
         {
-            // Here you have to add your code
+            robot.ReachedExit += (_, __) => this.end = true;
 
-            // Trivial sample algorithm that can just move right
-            var reachedEnd = false;
-            robot.ReachedExit += (_, __) => reachedEnd = true;
+            this.Exit(0, 0);
 
-            while (!reachedEnd)
+            // Tip: Consider writing `if (!reachedEnd)` instead of `... == false`
+            if (this.end == false)
             {
-                robot.Move(Direction.Right);
+                this.robot.HaltAndCatchFire();
+            }
+        }
+        private void Exit(int x, int y)
+        {
+            if (this.end == false && this.points.Add(new Point(x, y)))
+            {
+                //Right
+                bool status = this.robot.CanIMove(Direction.Right);
+                if (status && this.end == false)
+                {
+                    this.robot.Move(Direction.Right);
+                    this.Exit(x + 1, y);
+                    if (this.end == false)
+                    {
+                        this.robot.Move(Direction.Left);
+                    }
+                }
+
+                //Down
+                status = this.robot.CanIMove(Direction.Down);
+                if (status && this.end == false)
+                {
+                    this.robot.Move(Direction.Down);
+                    this.Exit(x, y + 1);
+                    if (this.end == false)
+                    {
+                        this.robot.Move(Direction.Up);
+                    }
+                }
+
+                //Left
+                status = this.robot.CanIMove(Direction.Left);
+                if (status && this.end == false)
+                {
+                    this.robot.Move(Direction.Left);
+                    this.Exit(x - 1, y);
+                    if (this.end == false)
+                    {
+                        this.robot.Move(Direction.Right);
+                    }
+                }
+
+                //Up
+                status = this.robot.CanIMove(Direction.Up);
+                if (status && this.end == false)
+                {
+                    this.robot.Move(Direction.Up);
+                    this.Exit(x, y - 1);
+                    if (this.end == false)
+                    {
+                        this.robot.Move(Direction.Down);
+                    }
+                }
             }
         }
     }
